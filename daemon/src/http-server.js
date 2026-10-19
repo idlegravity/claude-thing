@@ -25,9 +25,40 @@ function readBody(req) {
   });
 }
 
+const LOOPBACK = new Set(['127.0.0.1', 'localhost', '[::1]']);
+
+function isLoopbackHost(value) {
+  try { return LOOPBACK.has(new URL(`http://${value}`).hostname); } catch { return false; }
+}
+
+// Binding to 127.0.0.1 keeps the network out, not the browser: any page the
+// user has open can open ws://127.0.0.1:8790/ws or POST to /hook, and with
+// the queue it could read requestIds and answer permissions. A browser always
+// names the page in Origin on those requests, so one from anywhere but
+// loopback is refused. Native clients (the connector, the emulator bridge,
+// Claude Code's hooks) send no Origin and pass. The Host check stops DNS
+// rebinding, where an attacker's own hostname resolves to 127.0.0.1 and so
+// looks same-origin to the browser.
+export function isTrustedRequest(headers) {
+  if (!isLoopbackHost(headers.host || '')) return false;
+  const origin = headers.origin;
+  if (origin === undefined) return true;
+  try {
+    const u = new URL(origin);
+    return (u.protocol === 'http:' || u.protocol === 'https:') && LOOPBACK.has(u.hostname);
+  } catch {
+    return false; // includes the opaque "null" origin of sandboxed and file:// pages
+  }
+}
+
 export function createHttpServer({ hub, store, permissionBridge, sources }) {
   const server = http.createServer(async (req, res) => {
     const url = (req.url || '/').split('?')[0];
+    if (!isTrustedRequest(req.headers)) {
+      log('IN', `refused ${req.method} ${req.url} (host ${req.headers.host}, origin ${req.headers.origin})`);
+      res.writeHead(403);
+      return res.end();
+    }
     if (req.method === 'POST') log('IN', `${req.method} ${req.url}`);
 
     // Hook ingestion: PermissionRequest is held; everything else is
@@ -101,6 +132,11 @@ export function createHttpServer({ hub, store, permissionBridge, sources }) {
   });
 
   server.on('upgrade', (req, socket, head) => {
+    if (!isTrustedRequest(req.headers)) {
+      log('IN', `refused ws upgrade (host ${req.headers.host}, origin ${req.headers.origin})`);
+      socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+      return;
+    }
     if ((req.url || '').split('?')[0] === '/ws') {
       hub.wss.handleUpgrade(req, socket, head, (ws) => {
         hub.wss.emit('connection', ws, req);
