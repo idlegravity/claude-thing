@@ -52,7 +52,7 @@ jobs:
       - id: sha
         run: echo "sha=${{ github.event.pull_request.merge_commit_sha || github.sha }}" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ steps.sha.outputs.sha }}
 
@@ -97,11 +97,11 @@ jobs:
     needs: meta
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.meta.outputs.sha }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '20'
 
@@ -112,7 +112,7 @@ jobs:
 
       - name: restore the stock Nocturne image
         id: image-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: firmware/nocturne_image_${{ env.NOCTURNE_IMAGE_TAG }}.zip
           key: nocturne-image-${{ env.NOCTURNE_IMAGE_TAG }}
@@ -141,7 +141,7 @@ jobs:
             --zip "$base" \
             --out "dist/nocturne_${NOCTURNE_IMAGE_TAG}_claude_${TAG}.zip"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: firmware
           path: dist/nocturne_*_claude_*.zip
@@ -152,7 +152,7 @@ jobs:
     needs: meta
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.meta.outputs.sha }}
 
@@ -161,7 +161,7 @@ jobs:
       # reused verbatim.
       - name: restore the DMG
         id: dmg-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: dist/*.dmg
           key: dmg-${{ env.DMG_EPOCH }}-${{ hashFiles('mac/**', 'scripts/build-connector-dmg.sh') }}
@@ -170,7 +170,7 @@ jobs:
         if: steps.dmg-cache.outputs.cache-hit != 'true'
         run: scripts/build-connector-dmg.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: dmg
           path: dist/*.dmg
@@ -181,12 +181,12 @@ jobs:
     needs: [meta, firmware, dmg]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.meta.outputs.sha }}
           fetch-depth: 0
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           path: assets
           merge-multiple: true

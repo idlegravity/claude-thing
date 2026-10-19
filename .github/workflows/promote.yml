@@ -29,7 +29,7 @@ jobs:
     steps:
       # dev, not the dispatch ref: the ledger and the release scripts a promote
       # needs are the promoted commit's, and main is by definition behind it.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: dev
           fetch-depth: 0
