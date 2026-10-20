@@ -266,6 +266,13 @@ It contains **zero** `iap2` strings — macOS takes the SPP path, no MFi needed.
 New in 4.1: SPP is refused from **unpaired** peers unless an Android wake grant is armed
 (`bluetooth/mod.rs:1596`). Likeliest first-hardware-test failure.
 
+**First hardware run (2026-10-19, 2.0.5-dev):** that refusal never showed up — the Car Thing was
+bonded through System Settings, so it is not an unpaired peer. What did bite was a bonded device
+with no ACL link: macOS listed it under *Not Connected* and the connector's device card sat on
+"Waiting" — `BluetoothService.connect` deliberately does nothing but wait for the Car Thing's
+probe, so with the link down nothing started. Connecting it by hand in System Settings → Bluetooth fixed it at
+once. See `PROGRESS.md`.
+
 ### The port surface
 
 Only **4 commits** separate `41f4d048…` from `v2.1.0`, and only two carry substance:
