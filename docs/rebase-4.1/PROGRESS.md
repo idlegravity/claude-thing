@@ -18,15 +18,28 @@ remainder under **Next action** below. Never end a session with a dirty tree.
 
 ## Next action
 
-> **All nine phases are done and shipped — the only thing left is hardware.**
+> **Done — verified on a real Car Thing on 2026-10-19.** The rebase is
+> finished; nothing in this ledger is owed any more.
 >
-> Download `nocturne_v4.1.0_claude_2.0.1-dev.zip` from the `2.0.1-dev` release,
-> flash it, install `Nocturne-claude-2.0.5-local.dmg` from the same release, and
-> confirm `bridge.status` reports `bt.connected` plus a live
-> `claude.sessions.update`. Everything below it was verified without a device;
-> nothing in this rebase has run on one.
+> `nocturne_v4.1.0_claude_2.0.5-dev.zip` flashed through Terbium, with
+> `Nocturne-claude-2.0.5-local.dmg` from the same release. `bridge.status`
+> reported `bt.connected` for `Nocturne (Q313)` on firmware
+> `4.1.0+20260805032214`. In the first three minutes the daemon emitted 143
+> `claude.session.update` events and the device sent 19 `claude.session.get`,
+> 4 `claude.session.focus` (a tile tap raising its terminal) and a
+> `claude.queue.list` — the 4.1 forward path carrying `claude.*` both ways on
+> stock `nocturned`.
 >
-> If the device is quiet, suspect these before anything else:
+> The one snag: macOS showed the Car Thing **paired but not connected**, and
+> the connector's device card sat on "Waiting" until it was connected by hand
+> from System Settings → Bluetooth. The connector answers a Car Thing probe
+> rather than dialling out, so with no ACL link nothing ever starts. README
+> Step 5 now says so.
+>
+> **Not yet exercised on hardware:** answering a permission or a question from
+> the dial (`claude.permission.answer`, `claude.question.answer`).
+>
+> If a later device is quiet, suspect these before anything else:
 > - 4.1 refuses SPP from **unpaired** peers unless an Android wake grant is
 >   armed, and grants are never armed for Macs (NOTES §5e).
 > - Only one companion route is active at a time and the newest `app.ready`
@@ -34,16 +47,19 @@ remainder under **Next action** below. Never end a session with a dirty tree.
 > - `"No active app session"` back from a `claude.*` call means no companion is
 >   registered at all; `"Unknown method"` means the forward path works and the
 >   Mac app declined it.
+> - The Car Thing is paired but not **connected** in macOS (above).
 >
-> Do **not** run `promote.yml` until that passes — production is a deliberate
-> act and 2.0.1 has only ever been a dev prerelease.
+> `promote.yml` is still a deliberate act on explicit instruction — passing
+> this check makes 2.0.x eligible, it does not promote it.
 
 ## Worktree setup (needed once per fresh worktree)
 
-`daemon/node_modules` is a tracked relative symlink, but `device-app` and `emulator` are not. Create
-them the same way — **relative, never absolute**:
+No `node_modules` is tracked — `daemon/node_modules` used to be a committed symlink, and in the
+main checkout it pointed at itself (removed in 2.0.4). Either `npm install` in the worktree, or
+link each one back to the main checkout — **relative, never absolute, and never `git add`ed**:
 
 ```sh
+ln -s ../../claude-thing/daemon/node_modules     daemon/node_modules
 ln -s ../../claude-thing/device-app/node_modules device-app/node_modules
 ln -s ../../claude-thing/emulator/node_modules   emulator/node_modules
 ```
@@ -132,8 +148,9 @@ ln -s ../../claude-thing/emulator/node_modules   emulator/node_modules
       CDP screenshots of both UIs. DMG built and mounted. **Two bugs found and fixed:** the
       emulator read an injected zip's version as `v4.1.0_claude`, and `test-all.sh` printed the zip
       path instead of the version.
-      - [ ] **Hardware — NOT DONE, needs the device.** Flash the injected zip, install the DMG,
-            confirm `bridge.status` → `bt.connected` and a live `claude.sessions.update`.
+      - [x] **Hardware — done 2026-10-19** on `2.0.5-dev`: `bridge.status` → `bt.connected`,
+            live `claude.session.update` traffic, device-initiated `claude.*` requests answered.
+            See **Next action** for the numbers and the one snag (paired ≠ connected).
 - [x] **9 — Claim, clean, ship.** `2.0.0` claimed and merged as #67; GitNexus reindexed; worktree
       removed. **`docs/rebase-4.1/` stays** — `NOTES.md` is researched upstream fact that would cost
       a day to re-derive, and this ledger is now the record of what shipped and what is still owed.

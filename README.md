@@ -123,7 +123,17 @@ firmware can be flashed back the same way — but it does wipe what's on there n
 ## Step 5 — Pair and check
 
 The Car Thing enters pairing mode by itself the first time it boots after
-flashing. Open the **Bluetooth menu** on your Mac and connect to it.
+flashing. Until something connects it shows Nocturne's own setup screen, a QR
+code asking you to scan it with your phone — ignore that, the Mac is the
+companion here. (Press **M** on the device to open its Bluetooth page if it
+stops showing up.)
+
+1. Open **System Settings → Bluetooth** on your Mac and pair with
+   **Nocturne (…)**.
+2. **Make sure it says Connected, not just paired.** Pairing alone leaves the
+   Bluetooth link down, and the Nocturne app's device card sits on **Waiting**
+   forever. If it is listed but not connected, hover it in System Settings (or
+   click it in the menu-bar Bluetooth menu) and choose **Connect**.
 
 Two things tell you it worked:
 
